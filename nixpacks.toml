@@ -8,7 +8,5 @@ cmds = ["composer install --no-dev --optimize-autoloader --no-interaction --pref
 cmds = ["php artisan config:clear", "php artisan route:clear", "php artisan view:clear"]
 
 [start]
-# Perintah ini akan: 
-# 1. Jalankan migrasi database
-# 2. Kalau sukses, langsung jalankan server Laravel
-cmd = "php artisan migrate --force && exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+# Pakai migrate:fresh biar tabel lama dihapus dulu baru bikin baru
+cmd = "php artisan migrate:fresh --force && exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
