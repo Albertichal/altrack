@@ -26,7 +26,7 @@
             --text: #f0f0f0;
             --text-muted: #888888;
             --input-bg: #111111;
-            --radius: 12px;
+            --radius: 14px; /* Disamakan dengan dashboard */
         }
 
         html.light {
@@ -54,23 +54,31 @@
             max-width: 400px;
         }
 
-        /* Logo */
+        /* Logo Styling */
         .login-logo {
             text-align: center;
             margin-bottom: 32px;
         }
 
         .login-logo h1 {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 2.2rem;
+            font-weight: 800; /* Lebih bold agar 'serius' */
             color: var(--yellow);
-            letter-spacing: -1px;
+            letter-spacing: -1.5px;
+            text-transform: none; /* Menjaga case sensitivitas */
+        }
+
+        /* Bagian 'track' menjadi putih */
+        .login-logo h1 span {
+            color: var(--text);
         }
 
         .login-logo p {
-            font-size: 0.875rem;
+            font-size: 0.85rem;
+            font-weight: 500;
             color: var(--text-muted);
             margin-top: 4px;
+            letter-spacing: 0.2px;
         }
 
         /* Card */
@@ -88,9 +96,11 @@
 
         .form-group label {
             display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text);
+            font-size: 0.72rem; /* Ukuran stat-label di dashboard */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.55px;
+            color: var(--text-muted);
             margin-bottom: 8px;
         }
 
@@ -103,7 +113,7 @@
             background-color: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 10px 14px;
+            padding: 12px 14px;
             font-family: 'DM Sans', sans-serif;
             font-size: 0.95rem;
             color: var(--text);
@@ -157,13 +167,13 @@
             color: #111111;
             border: none;
             border-radius: 8px;
-            padding: 12px;
+            padding: 14px;
             font-family: 'DM Sans', sans-serif;
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
             transition: background-color 0.15s, transform 0.1s;
-            margin-top: 4px;
+            margin-top: 8px;
         }
 
         .btn-submit:hover {
@@ -177,36 +187,11 @@
         @media (max-width: 768px) {
             body {
                 padding: 16px;
-                align-items: flex-start;
-                padding-top: 24px;
-            }
-
-            .login-wrapper {
-                max-width: 100%;
+                align-items: center;
             }
 
             .login-card {
                 padding: 24px;
-            }
-
-            .login-logo {
-                margin-bottom: 24px;
-            }
-
-            .form-group input {
-                min-height: 44px;
-            }
-
-            .toggle-pw {
-                min-width: 44px;
-                min-height: 44px;
-                align-items: center;
-                justify-content: center;
-                right: 8px;
-            }
-
-            .btn-submit {
-                min-height: 48px;
             }
         }
     </style>
@@ -216,7 +201,7 @@
 
     <div class="login-wrapper">
         <div class="login-logo">
-            <h1>Altrack</h1>
+            <h1>Al<span>track</span></h1>
             <p>Gym tracker buat yang serius</p>
         </div>
 
@@ -234,29 +219,26 @@
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" value="{{ old('username') }}"
-                        placeholder="Masukkan username" autocomplete="username" autofocus>
+                        placeholder="Masukkan username" autocomplete="username" autofocus required>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrap">
                         <input type="password" id="password" name="password" placeholder="Masukkan password"
-                            class="has-toggle" autocomplete="current-password">
+                            class="has-toggle" autocomplete="current-password" required>
                         <button type="button" class="toggle-pw" onclick="togglePassword()"
                             title="Tampilkan/sembunyikan password">
-                            <!-- Eye open icon -->
                             <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
-                            <!-- Eye closed icon -->
                             <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                                 stroke-linecap="round" stroke-linejoin="round" style="display:none">
-                                <path
-                                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
                                 <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
                                 <line x1="1" y1="1" x2="23" y2="23" />
                             </svg>
