@@ -28,7 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/log/last-exercise', [WorkoutController::class, 'getLastExercise'])->name('log.last-exercise');
     Route::get('/log', [WorkoutController::class, 'index'])->name('log');
     Route::post('/log', [WorkoutController::class, 'store'])->name('log.store');
-
+    Route::delete('/workout/{workout}', [WorkoutController::class, 'destroy'])->name('workout.destroy');
+    
     // Profile
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
     Route::post('/profile/name', [ProfileController::class, 'updateName'])->name('profile.name');
@@ -52,7 +53,5 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/{user}/reset-password', [AdminController::class, 'resetPassword'])->name('admin.reset-password');
         Route::post('/admin/{user}/update-name', [AdminController::class, 'updateName'])->name('admin.update-name');
         Route::delete('/admin/{user}/delete', [AdminController::class, 'deleteUser'])->name('admin.delete');
-
     });
-
 });

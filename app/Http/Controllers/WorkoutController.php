@@ -18,33 +18,84 @@ class WorkoutController extends Controller
     {
         return [
             'PUSH' => [
-                'Bench Press', 'Incline Dumbbell Press', 'Overhead Press', 'Tricep Pushdown',
-                'Lateral Raise', 'Cable Fly', 'High to Low Cable Fly', 'Chest Dip', 'Arnold Press',
-                'Close Grip Bench Press', 'Push Up',
+                'Bench Press',
+                'Incline Dumbbell Press',
+                'Overhead Press',
+                'Tricep Pushdown',
+                'Lateral Raise',
+                'Cable Fly',
+                'High to Low Cable Fly',
+                'Chest Dip',
+                'Arnold Press',
+                'Close Grip Bench Press',
+                'Push Up',
             ],
             'PULL' => [
-                'Deadlift', 'Barbell Row', 'Pull Up', 'Lat Pulldown', 'Seated Cable Row',
-                'Bicep Curl', 'Hammer Curl', 'Face Pull', 'T-Bar Row', 'Single Arm Dumbbell Row',
+                'Deadlift',
+                'Barbell Row',
+                'Pull Up',
+                'Lat Pulldown',
+                'Seated Cable Row',
+                'Bicep Curl',
+                'Hammer Curl',
+                'Face Pull',
+                'T-Bar Row',
+                'Single Arm Dumbbell Row',
             ],
             'LEGS' => [
-                'Squat', 'Leg Press', 'Romanian Deadlift', 'Leg Curl', 'Leg Extension',
-                'Calf Raise', 'Hip Thrust', 'Bulgarian Split Squat', 'Hack Squat', 'Sumo Deadlift',
+                'Squat',
+                'Leg Press',
+                'Romanian Deadlift',
+                'Leg Curl',
+                'Leg Extension',
+                'Calf Raise',
+                'Hip Thrust',
+                'Bulgarian Split Squat',
+                'Hack Squat',
+                'Sumo Deadlift',
             ],
             'UPPER' => [
-                'Bench Press', 'Overhead Press', 'Pull Up', 'Barbell Row', 'Lateral Raise',
-                'Bicep Curl', 'Tricep Pushdown', 'Incline Dumbbell Press', 'Face Pull',
+                'Bench Press',
+                'Overhead Press',
+                'Pull Up',
+                'Barbell Row',
+                'Lateral Raise',
+                'Bicep Curl',
+                'Tricep Pushdown',
+                'Incline Dumbbell Press',
+                'Face Pull',
             ],
             'LOWER' => [
-                'Squat', 'Leg Press', 'Romanian Deadlift', 'Leg Curl', 'Leg Extension',
-                'Calf Raise', 'Hip Thrust', 'Bulgarian Split Squat',
+                'Squat',
+                'Leg Press',
+                'Romanian Deadlift',
+                'Leg Curl',
+                'Leg Extension',
+                'Calf Raise',
+                'Hip Thrust',
+                'Bulgarian Split Squat',
             ],
             'FULL' => [
-                'Squat', 'Bench Press', 'Deadlift', 'Overhead Press', 'Pull Up', 'Barbell Row',
-                'Bicep Curl', 'Tricep Pushdown', 'Leg Press', 'Calf Raise',
+                'Squat',
+                'Bench Press',
+                'Deadlift',
+                'Overhead Press',
+                'Pull Up',
+                'Barbell Row',
+                'Bicep Curl',
+                'Tricep Pushdown',
+                'Leg Press',
+                'Calf Raise',
             ],
             'CARDIO' => [
-                'Treadmill Run', 'Cycling', 'Jump Rope', 'Rowing Machine', 'Elliptical',
-                'Stair Climber', 'HIIT Sprint', 'Battle Ropes',
+                'Treadmill Run',
+                'Cycling',
+                'Jump Rope',
+                'Rowing Machine',
+                'Elliptical',
+                'Stair Climber',
+                'HIIT Sprint',
+                'Battle Ropes',
             ],
         ];
     }
@@ -163,5 +214,17 @@ class WorkoutController extends Controller
             'reps' => (int) $row->reps,
             'weight' => $row->weight !== null ? (float) $row->weight : null,
         ]);
+    }
+
+    public function destroy(Workout $workout)
+    {
+        if ($workout->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $workout->exercises()->delete();
+        $workout->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Workout berhasil dihapus.');
     }
 }

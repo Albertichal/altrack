@@ -139,7 +139,7 @@
     }
     @media (max-width: 768px) {
         .session-card { grid-template-columns: 1fr; }
-        .session-vol { text-align: left; }
+        .session-vol { text-align: left; align-items: flex-start !important; }
         .session-pills { gap: 8px; }
         .ex-pill {
             font-size: 0.75rem;
@@ -202,10 +202,27 @@
         color: var(--text-muted);
     }
     .session-vol {
-        text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
     }
     .session-vol-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
     .session-vol-val { font-size: 1.15rem; font-weight: 700; color: var(--yellow); margin-top: 4px; }
+    .btn-delete-workout {
+        background: rgba(239,68,68,0.12);
+        border: 1px solid rgba(239,68,68,0.35);
+        color: #ef4444;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-delete-workout:hover {
+        background: rgba(239,68,68,0.22);
+    }
     .chart-section {
         background: var(--bg-card);
         border: 1px solid var(--border);
@@ -313,8 +330,15 @@
                     </div>
                 </div>
                 <div class="session-vol">
-                    <div class="session-vol-label">Volume</div>
-                    <div class="session-vol-val">{{ number_format($vol, 0, ',', '.') }}</div>
+                    <div>
+                        <div class="session-vol-label">Volume</div>
+                        <div class="session-vol-val">{{ number_format($vol, 0, ',', '.') }}</div>
+                    </div>
+                    <form method="POST" action="{{ route('workout.destroy', $w) }}" onsubmit="return confirmDeleteWorkout(event, '{{ $w->split }}', '{{ $w->date->format('j M Y') }}')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn-delete-workout">Hapus</button>
+                    </form>
                 </div>
             </div>
         @empty
@@ -335,8 +359,21 @@
 </div>
 @endsection
 
-@if (count($volumePerSession) > 0)
 @push('scripts')
+<script>
+function confirmDeleteWorkout(e, split, date) {
+    e.preventDefault();
+    var form = e.target;
+    var msg = 'Hapus workout ' + split + ' ' + date + '? Data tidak bisa dikembalikan.';
+    if (typeof window.showConfirm === 'function') {
+        window.showConfirm(msg, function() { form.submit(); });
+    } else {
+        if (confirm(msg)) form.submit();
+    }
+    return false;
+}
+</script>
+@if (count($volumePerSession) > 0)
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 (function () {
@@ -398,5 +435,5 @@
     });
 })();
 </script>
-@endpush
 @endif
+@endpush
