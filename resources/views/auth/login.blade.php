@@ -201,7 +201,7 @@
 
     <div class="login-wrapper">
         <div class="login-logo">
-            <h1>Al<span>track</span></h1>
+            <h1>AL<span>track</span></h1>
             <p>Gym tracker buat yang serius</p>
         </div>
 
