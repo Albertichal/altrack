@@ -5,7 +5,10 @@ nixPkgs = ["php83", "php83Extensions.pdo", "php83Extensions.pdo_mysql", "php83Ex
 cmds = ["composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist"]
 
 [phases.build]
-cmds = []
+cmds = ["php artisan config:clear", "php artisan route:clear", "php artisan view:clear"]
 
 [start]
-cmd = "sh -c 'set -e; php artisan config:cache; php artisan route:cache; php artisan view:cache; exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}'"
+# Perintah ini akan: 
+# 1. Jalankan migrasi database
+# 2. Kalau sukses, langsung jalankan server Laravel
+cmd = "php artisan migrate --force && exec php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
