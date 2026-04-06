@@ -258,7 +258,7 @@
         <div class="stat-card">
             <div class="stat-label">Total Volume</div>
             <div class="stat-value">{{ number_format($totalVolume, 0, ',', '.') }}</div>
-            <div class="stat-sub">Σ sets × reps × weight (kg)</div>
+            <div class="stat-sub"> sets × reps × weight (kg)</div>
         </div>
     </div>
 
