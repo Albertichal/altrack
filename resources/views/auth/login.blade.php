@@ -202,7 +202,7 @@
     <div class="login-wrapper">
         <div class="login-logo">
             <h1>AL<span>track</span></h1>
-            <p>Gym tracker buat yang serius</p>
+            <p>Gym tracker</p>
         </div>
 
         <div class="login-card">
