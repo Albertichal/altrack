@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/log/last-exercise', [WorkoutController::class, 'getLastExercise'])->name('log.last-exercise');
     Route::get('/log', [WorkoutController::class, 'index'])->name('log');
+    Route::post('/log/cardio', [WorkoutController::class, 'storeCardio'])->name('cardio.store');
     Route::post('/log', [WorkoutController::class, 'store'])->name('log.store');
     Route::delete('/workout/{workout}', [WorkoutController::class, 'destroy'])->name('workout.destroy');
     

@@ -16,7 +16,6 @@ class Workout extends Model
         'FULL',
         'UPPER',
         'LOWER',
-        'CARDIO',
     ];
 
     protected $fillable = [
@@ -38,5 +37,23 @@ class Workout extends Model
     public function exercises()
     {
         return $this->hasMany(Exercise::class);
+    }
+
+    public function cardioLog()
+    {
+        return $this->hasOne(CardioLog::class);
+    }
+
+    public function getDayLabelAttribute(): string
+    {
+        return match($this->split) {
+            'PUSH'  => 'Push Day',
+            'PULL'  => 'Pull Day',
+            'LEGS'  => 'Leg Day',
+            'FULL'  => 'Full Day',
+            'UPPER' => 'Upper Day',
+            'LOWER' => 'Lower Day',
+            default => $this->split,
+        };
     }
 }

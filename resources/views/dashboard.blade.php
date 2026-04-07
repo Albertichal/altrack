@@ -312,14 +312,19 @@
             @endphp
             <div class="session-card">
                 <div>
-                    <div class="session-top">
-                        @php $sk = strtolower($w->split); @endphp
-                        <span class="split-badge {{ $sk }}">{{ $w->split }}</span>
-                        <span class="session-date">{{ $w->date->format('j M Y') }}</span>
-                    </div>
-                    <div class="session-meta">
-                        {{ $w->exercises->count() }} exercise · {{ $totalSets }} total sets
-                    </div>
+                <div class="session-top">
+    @php $sk = strtolower($w->split); @endphp
+    <span class="split-badge {{ $sk }}">{{ $w->split }}</span>
+    <span class="session-date">{{ $w->day_label }} — {{ $w->date->format('j M Y') }}</span>
+</div>
+<div class="session-meta">
+    {{ $w->exercises->count() }} exercise · {{ $totalSets }} total sets
+    @if($w->cardioLog)
+        · 🏃 {{ $w->cardioLog->duration_minutes }} min cardio
+        @if($w->cardioLog->speed) · {{ $w->cardioLog->speed }} km/h @endif
+        @if($w->cardioLog->incline) · incline {{ $w->cardioLog->incline }} @endif
+    @endif
+</div>
                     <div class="session-pills">
                         @foreach ($w->exercises->take(12) as $ex)
                             <span class="ex-pill">{{ $ex->name }}</span>

@@ -44,7 +44,7 @@ class DashboardController extends Controller
             ->value('v') ?? 0);
 
         $recentWorkouts = Workout::query()
-            ->with('exercises')
+            ->with(['exercises', 'cardioLog'])
             ->where('user_id', $userId)
             ->orderByDesc('date')
             ->orderByDesc('id')
@@ -66,7 +66,7 @@ class DashboardController extends Controller
         }
 
         $allWorkouts = Workout::query()
-            ->with('exercises')
+            ->with(['exercises', 'cardioLog'])
             ->where('user_id', $userId)
             ->orderBy('date')
             ->orderBy('id')

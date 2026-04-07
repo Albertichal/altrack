@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CardioLog;
 use App\Models\CustomExercise;
 use App\Models\Exercise;
 use App\Models\Workout;
@@ -11,9 +12,6 @@ use Illuminate\Validation\Rule;
 
 class WorkoutController extends Controller
 {
-    /**
-     * @return array<string, list<string>>
-     */
     private static function exercisesBySplit(): array
     {
         return [
@@ -27,8 +25,6 @@ class WorkoutController extends Controller
                 'Cable Lateral Raise',
                 'Dumbell Lateral Raise',
                 'Triceps Extension',
-                
-                
             ],
             'PULL' => [
                 'Weighted Cable Row',
@@ -39,7 +35,6 @@ class WorkoutController extends Controller
                 'Rear Delt Raise',
                 'Machine Bicep Curl',
                 'Dumbell Bicep Curl',
-                
             ],
             'LEGS' => [
                 'Barbell Squat',
@@ -47,7 +42,6 @@ class WorkoutController extends Controller
                 'Leg Extension',
                 'Leg Curl',
                 'Calf Raises',
-                
             ],
             'UPPER' => [
                 'Incline Dumbell Press',
@@ -58,7 +52,6 @@ class WorkoutController extends Controller
                 'Triceps Extension',
                 'Face Pull',
                 'Machine Bicep Curl',
-                
             ],
             'LOWER' => [
                 'Barbell Squat',
@@ -79,17 +72,6 @@ class WorkoutController extends Controller
                 'Barbell Squat',
                 'Leg Extension',
                 'Leg Curl',
-                
-            ],
-            'CARDIO' => [
-                'Treadmill Run',
-                'Cycling',
-                'Jump Rope',
-                'Rowing Machine',
-                'Elliptical',
-                'Stair Climber',
-                'HIIT Sprint',
-                'Battle Ropes',
             ],
         ];
     }
@@ -111,83 +93,99 @@ class WorkoutController extends Controller
 
         return view('log', [
             'exercisesBySplit' => $exercisesBySplit,
-            'customBySplit' => $customBySplit,
-            'splits' => Workout::SPLITS,
-            'todayYmd' => now()->format('Y-m-d'),
-            'todayLabel' => now()->format('j M Y'),
+            'customBySplit'    => $customBySplit,
+            'splits'           => Workout::SPLITS,
+            'todayYmd'         => now()->format('Y-m-d'),
+            'todayLabel'       => now()->format('j M Y'),
         ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'date' => 'required|date_format:Y-m-d|before_or_equal:today',
-            'split' => ['required', Rule::in(Workout::SPLITS)],
+        $hasExercises = $request->has('exercises') && count($request->input('exercises', [])) > 0;
+        $hasCardio    = $request->filled('cardio_duration');
+
+        // Minimal salah satu harus ada
+        if (!$hasExercises && !$hasCardio) {
+            return back()->withErrors(['error' => 'Tambah minimal satu exercise atau isi durasi cardio.'])->withInput();
+        }
+
+        $rules = [
+            'date'  => 'required|date_format:Y-m-d|before_or_equal:today',
             'notes' => 'nullable|string|max:5000',
-            'exercises' => 'required|array|min:1',
-            'exercises.*.name' => 'required|string|max:255',
-            'exercises.*.sets' => 'required|integer|min:1|max:500',
-            'exercises.*.reps' => 'required|integer|min:1|max:500',
-            'exercises.*.weight' => 'nullable|numeric|min:0|max:999999',
-        ], [
-            'date.required' => 'Tanggal wajib diisi.',
+            'cardio_duration' => 'nullable|integer|min:1|max:600',
+            'cardio_speed'    => 'nullable|numeric|min:0|max:30',
+            'cardio_incline'  => 'nullable|numeric|min:0|max:15',
+        ];
+
+        if ($hasExercises) {
+            $rules['split'] = ['required', Rule::in(Workout::SPLITS)];
+            $rules['exercises']           = 'required|array|min:1';
+            $rules['exercises.*.name']    = 'required|string|max:255';
+            $rules['exercises.*.sets']    = 'required|integer|min:1|max:500';
+            $rules['exercises.*.reps']    = 'required|integer|min:1|max:500';
+            $rules['exercises.*.weight']  = 'nullable|numeric|min:0|max:999999';
+        }
+
+        $request->validate($rules, [
+            'date.required'        => 'Tanggal wajib diisi.',
             'date.before_or_equal' => 'Tanggal tidak boleh di masa depan.',
-            'split.required' => 'Pilih split terlebih dahulu.',
-            'exercises.required' => 'Tambah minimal satu exercise.',
-            'exercises.min' => 'Tambah minimal satu exercise.',
+            'split.required'       => 'Pilih split terlebih dahulu.',
         ]);
 
-        $split = $request->string('split')->toString();
-        $canonical = self::exercisesBySplit()[$split] ?? [];
         $userId = $request->user()->id;
 
-        DB::transaction(function () use ($request, $split, $canonical, $userId) {
-            $workout = Workout::create([
-                'user_id' => $userId,
-                'split' => $split,
-                'date' => $request->date('date'),
-                'notes' => $request->input('notes'),
-            ]);
+        DB::transaction(function () use ($request, $hasExercises, $hasCardio, $userId) {
+            $workout = null;
 
-            foreach ($request->input('exercises', []) as $row) {
-                $workout->exercises()->create([
-                    'name' => $row['name'],
-                    'sets' => (int) $row['sets'],
-                    'reps' => (int) $row['reps'],
-                    'weight' => array_key_exists('weight', $row) && $row['weight'] !== '' && $row['weight'] !== null
-                        ? $row['weight']
-                        : null,
+            if ($hasExercises) {
+                $split     = $request->string('split')->toString();
+                $canonical = self::exercisesBySplit()[$split] ?? [];
+
+                $workout = Workout::create([
+                    'user_id' => $userId,
+                    'split'   => $split,
+                    'date'    => $request->date('date'),
+                    'notes'   => $request->input('notes'),
                 ]);
+
+                foreach ($request->input('exercises', []) as $row) {
+                    $workout->exercises()->create([
+                        'name'   => $row['name'],
+                        'sets'   => (int) $row['sets'],
+                        'reps'   => (int) $row['reps'],
+                        'weight' => isset($row['weight']) && $row['weight'] !== '' ? $row['weight'] : null,
+                    ]);
+                }
+
+                foreach ($request->input('exercises', []) as $row) {
+                    $name = trim((string) $row['name']);
+                    if ($name === '' || in_array($name, $canonical, true)) continue;
+                    CustomExercise::firstOrCreate(
+                        ['user_id' => $userId, 'name' => $name, 'muscle_group' => $split],
+                        ['description' => null]
+                    );
+                }
             }
 
-            foreach ($request->input('exercises', []) as $row) {
-                $name = trim((string) $row['name']);
-                if ($name === '') {
-                    continue;
-                }
-                if (in_array($name, $canonical, true)) {
-                    continue;
-                }
-                CustomExercise::firstOrCreate(
-                    [
-                        'user_id' => $userId,
-                        'name' => $name,
-                        'muscle_group' => $split,
-                    ],
-                    ['description' => null]
-                );
+            if ($hasCardio) {
+                CardioLog::create([
+                    'user_id'          => $userId,
+                    'workout_id'       => $workout?->id,
+                    'date'             => $request->input('date'),
+                    'duration_minutes' => (int) $request->input('cardio_duration'),
+                    'speed'            => $request->filled('cardio_speed') ? $request->input('cardio_speed') : null,
+                    'incline'          => $request->filled('cardio_incline') ? $request->input('cardio_incline') : null,
+                ]);
             }
         });
 
-        return redirect()->route('log')->with('success', 'Workout berhasil disimpan.');
+        return redirect()->route('log')->with('success', 'Sesi berhasil disimpan.');
     }
 
     public function getLastExercise(Request $request)
     {
-        $request->validate([
-            'exercise_name' => 'required|string|max:255',
-        ]);
-
+        $request->validate(['exercise_name' => 'required|string|max:255']);
         $name = $request->query('exercise_name');
 
         $row = Exercise::query()
@@ -199,25 +197,24 @@ class WorkoutController extends Controller
             ->select('exercises.sets', 'exercises.reps', 'exercises.weight')
             ->first();
 
-        if ($row === null) {
-            return response()->json(null);
-        }
+        if ($row === null) return response()->json(null);
 
         return response()->json([
-            'sets' => (int) $row->sets,
-            'reps' => (int) $row->reps,
+            'sets'   => (int) $row->sets,
+            'reps'   => (int) $row->reps,
             'weight' => $row->weight !== null ? (float) $row->weight : null,
         ]);
     }
 
     public function destroy(Workout $workout)
     {
-        if ($workout->user_id !== auth()->id()) {
-            abort(403);
-        }
+        if ($workout->user_id !== auth()->id()) abort(403);
 
-        $workout->exercises()->delete();
-        $workout->delete();
+        DB::transaction(function () use ($workout) {
+            $workout->cardioLog()?->delete();
+            $workout->exercises()->delete();
+            $workout->delete();
+        });
 
         return redirect()->route('dashboard')->with('success', 'Workout berhasil dihapus.');
     }
