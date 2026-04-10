@@ -541,9 +541,10 @@
                 @endif
             </a>
 
-            <form action="/logout" method="POST" class="nav-logout-desktop" style="display:inline;">
+            <form action="/logout" method="POST" class="nav-logout-desktop" id="form-logout-desktop" style="display:inline;">
                 @csrf
-                <button type="submit" class="btn-logout">
+                <button type="button" class="btn-logout"
+                    onclick="confirmAction('Yakin mau keluar?', 'form-logout-desktop', { okLabel: 'Keluar' })">
                     <span>Keluar</span>
                 </button>
             </form>
@@ -561,9 +562,10 @@
         @if(auth()->user()->isAdmin())
         <a href="/admin" class="{{ request()->is('admin') || request()->is('admin/*') ? 'active' : '' }}">Admin</a>
         @endif
-        <form action="/logout" method="POST">
+        <form action="/logout" method="POST" id="form-logout-mobile">
             @csrf
-            <button type="submit" class="btn-logout-mobile">Keluar</button>
+            <button type="button" class="btn-logout-mobile"
+                onclick="confirmAction('Yakin mau keluar?', 'form-logout-mobile', { okLabel: 'Keluar' })">Keluar</button>
         </form>
     </div>
 </nav>

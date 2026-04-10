@@ -54,4 +54,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(CustomExercise::class);
     }
+
+    public function customSplits()
+    {
+        return $this->hasMany(CustomSplit::class);
+    }
 }

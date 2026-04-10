@@ -262,6 +262,27 @@
         background-color: rgba(245,197,24,0.06);
     }
 
+    .btn-progress {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgba(96, 165, 250, 0.35);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #60a5fa;
+        background: rgba(96, 165, 250, 0.08);
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn-progress:hover {
+        background: rgba(96, 165, 250, 0.16);
+        border-color: rgba(96, 165, 250, 0.55);
+    }
+
     .panel-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -464,7 +485,8 @@
         .btn-toggle,
         .btn-tambah,
         .btn-reset-access,
-        .btn-kelola {
+        .btn-kelola,
+        .btn-progress {
             min-height: 44px;
             padding: 10px 14px;
         }
@@ -615,6 +637,8 @@
                                     onclick="togglePanel({{ $user->id }})">
                                     Kelola Akun
                                 </button>
+
+                                <a href="{{ route('admin.user.progress', $user) }}" class="btn-progress">Progress</a>
                             </div>
 
                             <hr class="action-divider">
@@ -632,7 +656,8 @@
                                     <input type="hidden" name="days" value="">
                                 </form>
                                 <button type="button" class="btn-tambah"
-                                    onclick="injectAndSubmit('days-{{ $user->id }}', 'form-add-{{ $user->id }}')">
+                                    data-username="{{ $user->username }}"
+                                    onclick="injectAndConfirm('days-{{ $user->id }}', 'form-add-{{ $user->id }}', this.dataset.username, 'add')">
                                     Tambah
                                 </button>
 
@@ -643,7 +668,8 @@
                                     <input type="hidden" name="days" value="">
                                 </form>
                                 <button type="button" class="btn-reset-access"
-                                    onclick="injectAndSubmit('days-{{ $user->id }}', 'form-reset-{{ $user->id }}')">
+                                    data-username="{{ $user->username }}"
+                                    onclick="injectAndConfirm('days-{{ $user->id }}', 'form-reset-{{ $user->id }}', this.dataset.username, 'reset')">
                                     Reset
                                 </button>
                             </div>
@@ -747,9 +773,9 @@
                                         class="btn-delete-user"
                                         data-username="{{ $user->username }}"
                                         onclick="confirmAction(
-                                            'Hapus akun @' + this.dataset.username + '? Semua data workout akan ikut terhapus.',
+                                            'Hapus akun @' + this.dataset.username + '? Semua data workout akan ikut terhapus permanen.',
                                             'form-delete-user-{{ $user->id }}',
-                                            { danger: true, okLabel: 'Ya, Hapus' }
+                                            { danger: true, okLabel: 'Ya, Hapus Akun' }
                                         )">
                                         Hapus Akun
                                     </button>
@@ -794,15 +820,27 @@
         }
     }
 
-    function injectAndSubmit(inputId, formId) {
-        const days = document.getElementById(inputId).value;
-        if (!days || parseInt(days) < 1) {
+    function injectAndConfirm(inputId, formId, username, action) {
+        const days = parseInt(document.getElementById(inputId).value, 10);
+        if (!days || days < 1) {
             showToast('Masukkan jumlah hari terlebih dahulu (minimal 1).', 'error');
             return;
         }
-        const form = document.getElementById(formId);
-        form.querySelector('input[name="days"]').value = days;
-        form.submit();
+        document.getElementById(formId).querySelector('input[name="days"]').value = days;
+
+        if (action === 'add') {
+            confirmAction(
+                'Tambah ' + days + ' hari akses untuk @' + username + '?',
+                formId,
+                { okLabel: 'Ya, Tambah' }
+            );
+        } else {
+            confirmAction(
+                'Reset akses @' + username + '? Waktu akses akan direset.',
+                formId,
+                { danger: true, okLabel: 'Ya, Reset' }
+            );
+        }
     }
 
     function togglePanelPw(btn) {

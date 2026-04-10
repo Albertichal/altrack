@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exercise;
 use App\Models\User;
+use App\Models\Workout;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -54,10 +56,25 @@ class AdminController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'is_active' => true,
-            'expires_at' => null,
+            'expires_at' => $request->role === 'admin' ? null : now()->addDays(30),
         ]);
 
         return redirect()->route('admin')->with('success', "Akun @{$request->username} berhasil dibuat.");
+    }
+
+    public function userProgress(Request $request, User $user)
+    {
+        $recentWorkouts = Workout::with(['exercises', 'cardioLog'])
+            ->where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->take(10)
+            ->get();
+
+        return view('admin.user-progress', [
+            'member'         => $user,
+            'recentWorkouts' => $recentWorkouts,
+        ]);
     }
 
     public function toggleActive(User $user)

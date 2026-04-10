@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\CustomSplitController;
 use App\Http\Controllers\WorkoutController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,7 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/log', [WorkoutController::class, 'index'])->name('log');
     Route::post('/log/cardio', [WorkoutController::class, 'storeCardio'])->name('cardio.store');
     Route::post('/log', [WorkoutController::class, 'store'])->name('log.store');
+    Route::get('/workouts/{workout}/edit', [WorkoutController::class, 'edit'])->name('workout.edit');
+    Route::put('/workouts/{workout}', [WorkoutController::class, 'update'])->name('workout.update');
     Route::delete('/workout/{workout}', [WorkoutController::class, 'destroy'])->name('workout.destroy');
+
+    Route::post('/splits', [CustomSplitController::class, 'store'])->name('splits.store');
+    Route::delete('/splits/{customSplit}', [CustomSplitController::class, 'destroy'])->name('splits.destroy');
     
     // Profile
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
@@ -45,6 +51,8 @@ Route::middleware('auth')->group(function () {
         // Route statis HARUS di atas route {user}
         Route::get('/admin/create-user', [AdminController::class, 'showCreateUser'])->name('admin.create-user');
         Route::post('/admin/create-user', [AdminController::class, 'storeUser'])->name('admin.store-user');
+
+        Route::get('/admin/{user}/progress', [AdminController::class, 'userProgress'])->name('admin.user.progress');
 
         // Route dengan {user} parameter
         Route::post('/admin/{user}/toggle', [AdminController::class, 'toggleActive'])->name('admin.toggle');

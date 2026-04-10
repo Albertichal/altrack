@@ -1,11 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Log Workout')
+@section('title', 'Edit Workout')
 
 @push('styles')
 <style>
     .log-page { max-width: 640px; margin: 0 auto; }
-    .log-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+    .log-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .log-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
     .log-card {
         background-color: var(--bg-card);
         border: 1px solid var(--border);
@@ -23,25 +24,6 @@
         font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 8px 12px;
         border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);
     }
-    .log-card-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .log-card-label-row .log-card-label { margin-bottom: 0; }
-    .btn-add-split {
-        font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 700;
-        padding: 4px 10px; border-radius: 6px; cursor: pointer;
-        background: transparent; border: 1px solid var(--border);
-        color: var(--text-muted); transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-add-split:hover { border-color: var(--yellow); color: var(--yellow); }
-    .split-chip-wrap { display: inline-flex; align-items: center; gap: 2px; }
-    .split-chip-del {
-        width: 18px; height: 18px; border-radius: 50%; border: none;
-        background: transparent; color: #555; font-size: 0.85rem;
-        cursor: pointer; display: flex; align-items: center; justify-content: center;
-        padding: 0; line-height: 1; transition: color 0.15s;
-    }
-    .split-chip-del:hover { color: #ef4444; }
-    .add-split-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
-    .add-split-row .form-input { flex: 1; min-width: 120px; }
     .split-chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .split-chip {
         font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 600;
@@ -53,6 +35,18 @@
     .split-chip:active:not(.locked) { transform: scale(0.97); }
     .split-chip.active { background: #f5c518; border-color: #f5c518; color: #0a0a0a; font-weight: 700; }
     .split-chip.locked:not(.active) { opacity: 0.3; cursor: not-allowed; }
+    .split-chip.deleted {
+        border-color: rgba(245,197,24,0.4); color: var(--yellow);
+        cursor: default; opacity: 0.75;
+    }
+    .split-deleted-label {
+        font-size: 0.72rem; color: var(--text-muted); margin-top: 8px;
+    }
+    .split-deleted-notice {
+        margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);
+        background: rgba(245,197,24,0.06); border: 1px solid rgba(245,197,24,0.2);
+        border-radius: 8px; padding: 8px 12px;
+    }
     .lock-badge {
         display: none; align-items: center; gap: 6px; margin-top: 10px;
         font-size: 0.78rem; font-weight: 600; color: var(--yellow);
@@ -128,6 +122,14 @@
     .btn-save:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
     .btn-save:not(:disabled) { background: #f5c518; color: #111; }
     .btn-save:not(:disabled):hover { background: #d4a900; }
+    .btn-cancel {
+        display: block; width: 100%; text-align: center;
+        font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600;
+        padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+        color: var(--text-muted); text-decoration: none; margin-top: 10px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-cancel:hover { border-color: var(--text-muted); color: var(--text); }
     .log-errors {
         background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.35);
         border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
@@ -159,7 +161,8 @@
 
 @section('content')
 <div class="log-page">
-    <h1 class="log-title">Log Workout</h1>
+    <h1 class="log-title">Edit Workout</h1>
+    <p class="log-subtitle">{{ $workout->day_label }} — {{ $workout->date->format('j M Y') }}</p>
 
     @if ($errors->any())
         <div class="log-errors">
@@ -171,9 +174,10 @@
         </div>
     @endif
 
-    <form id="workoutForm" action="{{ route('log.store') }}" method="POST">
+    <form id="workoutForm" action="{{ route('workout.update', $workout) }}" method="POST">
         @csrf
-        <input type="hidden" name="split" id="fieldSplit" value="{{ $splits[0]['name'] ?? '' }}">
+        @method('PUT')
+        <input type="hidden" name="split" id="fieldSplit" value="{{ $currentSplit }}">
 
         {{-- Cardio hidden inputs --}}
         <input type="hidden" name="cardio_duration" id="hiddenCardioDuration">
@@ -183,36 +187,31 @@
         <div class="log-card">
             <div class="log-card-label">Tanggal</div>
             <div class="date-row">
-                <span class="date-display" id="dateLabel">{{ $todayLabel }}</span>
+                <span class="date-display" id="dateLabel">{{ \Carbon\Carbon::parse($currentDate)->format('j M Y') }}</span>
                 <div class="date-input-wrap">
-                    <input type="date" name="date" id="fieldDate" value="{{ $todayYmd }}" max="{{ $todayYmd }}" required>
+                    <input type="date" name="date" id="fieldDate" value="{{ $currentDate }}" max="{{ $todayYmd }}" required>
                 </div>
             </div>
         </div>
 
         <div class="log-card">
-            <div class="log-card-label-row">
-                <span class="log-card-label">Pilih split</span>
-                <button type="button" class="btn-add-split" id="btnAddSplit" onclick="toggleAddSplit()">+ Split</button>
-            </div>
-            <div class="split-chips" id="splitChips">
-                @foreach ($splits as $split)
-                    <span class="split-chip-wrap">
-                        <button type="button" class="split-chip {{ $loop->first ? 'active' : '' }}" data-split="{{ $split['name'] }}">{{ $split['name'] }}</button>
-                        @if (!$split['is_default'])
-                            <button type="button" class="split-chip-del" onclick="handleDeleteSplit({{ $split['id'] }}, '{{ $split['name'] }}')" title="Hapus split">×</button>
-                        @endif
-                    </span>
-                @endforeach
-            </div>
-            <div class="add-split-row" id="addSplitRow" style="display:none;">
-                <input type="text" class="form-input" id="newSplitName" placeholder="Nama split baru..." maxlength="50" autocomplete="off">
-                <button type="button" class="btn-tambah" id="btnSaveSplit">Simpan</button>
-                <button type="button" class="btn-tambah" onclick="toggleAddSplit()">Batal</button>
-            </div>
-            <div class="lock-badge" id="lockBadge">
-                🔒 <span id="lockLabel">{{ $splits[0]['name'] ?? '' }}</span>
-            </div>
+            <div class="log-card-label">Pilih split</div>
+            @if (!$splitExists)
+                <div class="split-chips">
+                    <button type="button" class="split-chip deleted" disabled>{{ $currentSplit }}</button>
+                </div>
+                <div class="split-deleted-label">(dihapus)</div>
+                <div class="split-deleted-notice">Split ini sudah dihapus. Exercise tetap bisa diedit.</div>
+            @else
+                <div class="split-chips" id="splitChips">
+                    @foreach ($splits as $split)
+                        <button type="button" class="split-chip {{ $split['name'] === $currentSplit ? 'active' : '' }}" data-split="{{ $split['name'] }}">{{ $split['name'] }}</button>
+                    @endforeach
+                </div>
+                <div class="lock-badge" id="lockBadge">
+                    🔒 <span id="lockLabel">{{ $workout->day_label }}</span>
+                </div>
+            @endif
         </div>
 
         <div class="log-card">
@@ -259,15 +258,15 @@
                 <div class="cardio-grid">
                     <div>
                         <label class="form-label" for="cardioDuration">Durasi (menit)</label>
-                        <input type="number" class="form-input" id="cardioDuration" min="1" max="600" placeholder="30">
+                        <input type="number" class="form-input" id="cardioDuration" min="1" max="600" placeholder="30" value="{{ $cardioDuration }}">
                     </div>
                     <div>
                         <label class="form-label" for="cardioSpeed">Speed (km/h)</label>
-                        <input type="number" class="form-input" id="cardioSpeed" min="0" max="30" step="0.5" placeholder="6.5">
+                        <input type="number" class="form-input" id="cardioSpeed" min="0" max="30" step="0.5" placeholder="6.5" value="{{ $cardioSpeed }}">
                     </div>
                     <div>
                         <label class="form-label" for="cardioIncline">Incline (max 15)</label>
-                        <input type="number" class="form-input" id="cardioIncline" min="0" max="15" step="0.5" placeholder="5">
+                        <input type="number" class="form-input" id="cardioIncline" min="0" max="15" step="0.5" placeholder="5" value="{{ $cardioIncline }}">
                     </div>
                 </div>
                 <div class="cardio-hint">Durasi wajib diisi jika ingin menyimpan cardio.</div>
@@ -282,22 +281,12 @@
 
         <div class="log-card">
             <div class="log-card-label">Notes (opsional)</div>
-            <textarea class="notes-ta" name="notes" id="fieldNotes" placeholder="Catatan singkat…">{{ old('notes') }}</textarea>
+            <textarea class="notes-ta" name="notes" id="fieldNotes" placeholder="Catatan singkat…">{{ $currentNotes }}</textarea>
         </div>
 
-        <button type="submit" class="btn-save" id="btnSave" disabled>Simpan Sesi</button>
+        <button type="submit" class="btn-save" id="btnSave" disabled>Simpan Perubahan</button>
+        <a href="{{ route('dashboard') }}" class="btn-cancel">Batal</a>
     </form>
-
-    <div id="splitDeleteForms">
-        @foreach ($splits as $split)
-            @if (!$split['is_default'])
-            <form id="form-del-split-{{ $split['id'] }}" action="{{ route('splits.destroy', $split['id']) }}" method="POST" style="display:none;">
-                @csrf
-                @method('DELETE')
-            </form>
-            @endif
-        @endforeach
-    </div>
 </div>
 @endsection
 
@@ -305,12 +294,13 @@
 <script>
 (function () {
     const exercisesBySplit = @json($exercisesBySplit);
-    const splitsData       = @json($splits);
+    const initExList       = @json($existingExercises);
+    const initCardioOpen   = {{ $initCardioOpen ? 'true' : 'false' }};
 
-    let currentSplit = {!! json_encode($splits[0]['name'] ?? 'PUSH') !!};
+    let currentSplit = {!! json_encode($currentSplit) !!};
     let splitLocked  = false;
     let cardioOpen   = false;
-    const exList     = [];
+    const exList     = initExList.slice();
 
     function formatDateLabel(ymd) {
         const d = new Date(ymd + 'T12:00:00');
@@ -343,7 +333,6 @@
         });
         rebuildSelect();
         clearMetricInputs(true);
-        saveDraft();
     }
 
     function lockSplit() {
@@ -353,8 +342,10 @@
             if (!btn.classList.contains('active')) btn.classList.add('locked');
         });
         const badge = document.getElementById('lockBadge');
-        badge.style.display = 'flex';
-        document.getElementById('lockLabel').textContent = currentSplit;
+        if (badge) {
+            badge.style.display = 'flex';
+            document.getElementById('lockLabel').textContent = currentSplit;
+        }
     }
 
     function unlockSplit() {
@@ -363,7 +354,8 @@
         document.querySelectorAll('.split-chip').forEach(function (btn) {
             btn.classList.remove('locked');
         });
-        document.getElementById('lockBadge').style.display = 'none';
+        const badge = document.getElementById('lockBadge');
+        if (badge) badge.style.display = 'none';
     }
 
     function clearMetricInputs(clearSelect) {
@@ -413,7 +405,6 @@
         if (exList.length === 0) unlockSplit();
         else lockSplit();
         updateSaveBtn();
-        saveDraft();
 
         wrap.querySelectorAll('.ex-item-remove').forEach(function (b) {
             b.addEventListener('click', function () {
@@ -423,182 +414,33 @@
         });
     }
 
-    function saveDraft() {
-        try {
-            localStorage.setItem('altrack_log_draft', JSON.stringify({
-                date:           document.getElementById('fieldDate').value,
-                split:          currentSplit,
-                notes:          document.getElementById('fieldNotes').value,
-                exList:         exList.slice(),
-                cardioOpen:     cardioOpen,
-                cardioDuration: document.getElementById('cardioDuration').value,
-                cardioSpeed:    document.getElementById('cardioSpeed').value,
-                cardioIncline:  document.getElementById('cardioIncline').value,
-            }));
-        } catch (e) {}
-    }
-
-    function restoreDraft() {
-        var raw;
-        try { raw = localStorage.getItem('altrack_log_draft'); } catch (e) { return; }
-        if (!raw) return;
-        var draft;
-        try { draft = JSON.parse(raw); } catch (e) { return; }
-
-        if (draft.split && splitsData.some(function (s) { return s.name === draft.split; })) {
-            setSplit(draft.split);
-        }
-
-        if (draft.date) {
-            document.getElementById('fieldDate').value = draft.date;
-            document.getElementById('dateLabel').textContent = formatDateLabel(draft.date);
-        }
-
-        if (Array.isArray(draft.exList) && draft.exList.length > 0) {
-            exList.length = 0;
-            draft.exList.forEach(function (row) { exList.push(row); });
-            renderList();
-        }
-
-        if (draft.notes) document.getElementById('fieldNotes').value = draft.notes;
-
-        if (draft.cardioOpen) {
-            cardioOpen = true;
-            document.getElementById('cardioFields').classList.add('open');
-            document.getElementById('btnCardioToggle').textContent = '− Tutup';
-        }
-        if (draft.cardioDuration) document.getElementById('cardioDuration').value = draft.cardioDuration;
-        if (draft.cardioSpeed)    document.getElementById('cardioSpeed').value    = draft.cardioSpeed;
-        if (draft.cardioIncline)  document.getElementById('cardioIncline').value  = draft.cardioIncline;
-
-        updateSaveBtn();
-    }
-
     function escapeHtml(s) {
         const d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
     }
 
-    function addSplitChip(split) {
-        const wrap = document.createElement('span');
-        wrap.className = 'split-chip-wrap';
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'split-chip';
-        btn.dataset.split = split.name;
-        btn.textContent = split.name;
-        wrap.appendChild(btn);
-
-        const del = document.createElement('button');
-        del.type = 'button';
-        del.className = 'split-chip-del';
-        del.title = 'Hapus split';
-        del.textContent = '×';
-        del.addEventListener('click', function () { handleDeleteSplit(split.id, split.name); });
-        wrap.appendChild(del);
-
-        document.getElementById('splitChips').appendChild(wrap);
-
-        const form = document.createElement('form');
-        form.id = 'form-del-split-' + split.id;
-        form.action = '{!! url('/splits') !!}/' + split.id;
-        form.method = 'POST';
-        form.style.display = 'none';
-
-        const tokenInput = document.createElement('input');
-        tokenInput.type = 'hidden';
-        tokenInput.name = '_token';
-        tokenInput.value = document.querySelector('meta[name="csrf-token"]').content;
-        form.appendChild(tokenInput);
-
-        const methodInput = document.createElement('input');
-        methodInput.type = 'hidden';
-        methodInput.name = '_method';
-        methodInput.value = 'DELETE';
-        form.appendChild(methodInput);
-
-        document.getElementById('splitDeleteForms').appendChild(form);
-    }
-
-    window.toggleAddSplit = function () {
-        const row = document.getElementById('addSplitRow');
-        const visible = row.style.display !== 'none';
-        row.style.display = visible ? 'none' : 'flex';
-        if (!visible) document.getElementById('newSplitName').focus();
-    };
-
-    window.handleDeleteSplit = function (id, name) {
-        confirmAction(
-            'Hapus split "' + name + '"? Exercise yang sudah dilog tidak ikut terhapus.',
-            'form-del-split-' + id,
-            { danger: true, okLabel: 'Ya, Hapus' }
-        );
-    };
-
-    document.getElementById('btnSaveSplit').addEventListener('click', async function () {
-        const inp  = document.getElementById('newSplitName');
-        const name = inp.value.trim();
-        if (!name) { showToast('Isi nama split.', 'error'); return; }
-        const btn = this;
-        btn.disabled = true;
-        try {
-            const res = await fetch('{!! route('splits.store') !!}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ name }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                showToast(data.error || 'Gagal menyimpan split.', 'error');
-            } else {
-                const s = data.split;
-                splitsData.push({ id: s.id, name: s.name, is_default: false });
-                exercisesBySplit[s.name] = [];
-                addSplitChip(s);
-                inp.value = '';
-                toggleAddSplit();
-                showToast('Split "' + s.name + '" berhasil ditambahkan.', 'success');
-            }
-        } catch (e) {
-            showToast('Terjadi kesalahan.', 'error');
-        }
-        btn.disabled = false;
-    });
-
-    document.getElementById('newSplitName').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnSaveSplit').click(); }
-    });
-
     window.toggleCardio = function () {
         cardioOpen = !cardioOpen;
         document.getElementById('cardioFields').classList.toggle('open', cardioOpen);
         document.getElementById('btnCardioToggle').textContent = cardioOpen ? '− Tutup' : '+ Tambah';
         updateSaveBtn();
-        saveDraft();
     };
 
-    document.getElementById('cardioDuration').addEventListener('input', function () { updateSaveBtn(); saveDraft(); });
-    document.getElementById('cardioSpeed').addEventListener('input', saveDraft);
-    document.getElementById('cardioIncline').addEventListener('input', saveDraft);
+    document.getElementById('cardioDuration').addEventListener('input', updateSaveBtn);
 
     document.getElementById('fieldDate').addEventListener('change', function () {
         document.getElementById('dateLabel').textContent = formatDateLabel(this.value);
-        saveDraft();
     });
 
-    document.getElementById('fieldNotes').addEventListener('input', saveDraft);
-
-    document.getElementById('splitChips').addEventListener('click', function (e) {
-        const btn = e.target.closest('.split-chip');
-        if (!btn || splitLocked) return;
-        setSplit(btn.getAttribute('data-split'));
-    });
+    const splitChipsEl = document.getElementById('splitChips');
+    if (splitChipsEl) {
+        splitChipsEl.addEventListener('click', function (e) {
+            const btn = e.target.closest('.split-chip');
+            if (!btn || splitLocked) return;
+            setSplit(btn.getAttribute('data-split'));
+        });
+    }
 
     document.getElementById('exSelect').addEventListener('change', function () {
         fetchLastExercise(this.value);
@@ -610,10 +452,10 @@
         const reps   = parseInt(document.getElementById('fieldReps').value, 10);
         const wRaw   = document.getElementById('fieldWeight').value;
         const weight = parseFloat(wRaw);
-        if (!name)                    { showToast('Pilih exercise dulu.', 'error'); return; }
-        if (!sets || sets < 1)        { showToast('Sets minimal 1.', 'error'); return; }
-        if (!reps || reps < 1)        { showToast('Reps minimal 1.', 'error'); return; }
-        if (!wRaw || weight < 1)      { showToast('Weight minimal 1 kg.', 'error'); return; }
+        if (!name)               { showToast('Pilih exercise dulu.', 'error'); return; }
+        if (!sets || sets < 1)   { showToast('Sets minimal 1.', 'error'); return; }
+        if (!reps || reps < 1)   { showToast('Reps minimal 1.', 'error'); return; }
+        if (!wRaw || weight < 1) { showToast('Weight minimal 1 kg.', 'error'); return; }
         exList.push({ name, sets, reps, weight: wRaw });
         renderList();
         document.getElementById('exSelect').value = '';
@@ -654,13 +496,18 @@
                 form.appendChild(input);
             });
         });
-
-        try { localStorage.removeItem('altrack_log_draft'); } catch (e) {}
     });
 
+    // Init
     rebuildSelect();
-    restoreDraft();
-    if (exList.length === 0) renderList();
+    renderList();
+
+    if (initCardioOpen) {
+        cardioOpen = true;
+        document.getElementById('cardioFields').classList.add('open');
+        document.getElementById('btnCardioToggle').textContent = '− Tutup';
+        updateSaveBtn();
+    }
 })();
 </script>
 @endpush

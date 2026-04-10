@@ -140,14 +140,7 @@
     @media (max-width: 768px) {
         .session-card { grid-template-columns: 1fr; }
         .session-vol { text-align: left; align-items: flex-start !important; }
-        .session-pills { gap: 8px; }
-        .ex-pill {
-            font-size: 0.75rem;
-            padding: 6px 10px;
-            min-height: 32px;
-            display: inline-flex;
-            align-items: center;
-        }
+        .ex-row { font-size: 0.78rem; }
         .heatmap-scroll {
             margin-left: -4px;
             margin-right: -4px;
@@ -186,21 +179,21 @@
     .split-badge.upper { background: #fb923c; color: #111; }
     .split-badge.lower { background: #f87171; color: #111; }
     .split-badge.cardio { background: #2dd4bf; color: #111; }
+    .split-badge.custom { background: #555;    color: #eee; }
     .session-date { font-size: 0.9rem; font-weight: 600; color: var(--text); }
     .session-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
-    .session-pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    .ex-pill {
-        font-size: 0.72rem;
-        padding: 4px 9px;
-        border-radius: 6px;
-        background: var(--bg);
-        border: 1px solid var(--border);
+    .ex-row {
+        font-size: 0.82rem;
         color: var(--text-muted);
+        line-height: 1.5;
+        padding: 3px 0;
     }
+    .ex-row + .ex-row {
+        border-top: 1px solid var(--border);
+        padding-top: 5px;
+        margin-top: 2px;
+    }
+    .ex-name { font-weight: 600; color: var(--text); }
     .session-vol {
         display: flex;
         flex-direction: column;
@@ -219,9 +212,27 @@
         font-weight: 600;
         cursor: pointer;
         transition: background 0.15s;
+        font-family: 'DM Sans', sans-serif;
     }
     .btn-delete-workout:hover {
         background: rgba(239,68,68,0.22);
+    }
+    .btn-edit-workout {
+        display: inline-block;
+        background: rgba(245,197,24,0.1);
+        border: 1px solid rgba(245,197,24,0.35);
+        color: var(--yellow);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.15s;
+        font-family: 'DM Sans', sans-serif;
+        white-space: nowrap;
+    }
+    .btn-edit-workout:hover {
+        background: rgba(245,197,24,0.2);
     }
     .chart-section {
         background: var(--bg-card);
@@ -313,8 +324,11 @@
             <div class="session-card">
                 <div>
                 <div class="session-top">
-    @php $sk = strtolower($w->split); @endphp
-    <span class="split-badge {{ $sk }}">{{ $w->split }}</span>
+    @php
+        $sk = strtolower($w->split);
+        $badgeClass = in_array($sk, ['push','pull','legs','full','upper','lower','cardio']) ? $sk : 'custom';
+    @endphp
+    <span class="split-badge {{ $badgeClass }}">{{ $w->split }}</span>
     <span class="session-date">{{ $w->day_label }} — {{ $w->date->format('j M Y') }}</span>
 </div>
 <div class="session-meta">
@@ -325,13 +339,13 @@
         @if($w->cardioLog->incline) · incline {{ $w->cardioLog->incline }} @endif
     @endif
 </div>
-                    <div class="session-pills">
-                        @foreach ($w->exercises->take(12) as $ex)
-                            <span class="ex-pill">{{ $ex->name }}</span>
+                    <div>
+                        @foreach ($w->exercises as $ex)
+                            <div class="ex-row">
+                                <span class="ex-name">{{ $ex->name }}</span>
+                                · {{ $ex->sets }}&times;{{ $ex->reps }} @ {{ $ex->weight ?? '—' }} kg
+                            </div>
                         @endforeach
-                        @if ($w->exercises->count() > 12)
-                            <span class="ex-pill">+{{ $w->exercises->count() - 12 }}</span>
-                        @endif
                     </div>
                 </div>
                 <div class="session-vol">
@@ -339,6 +353,7 @@
                         <div class="session-vol-label">Volume</div>
                         <div class="session-vol-val">{{ number_format($vol, 0, ',', '.') }}</div>
                     </div>
+                    <a href="{{ route('workout.edit', $w) }}" class="btn-edit-workout">Edit</a>
                     <form method="POST" action="{{ route('workout.destroy', $w) }}" onsubmit="return confirmDeleteWorkout(event, '{{ $w->split }}', '{{ $w->date->format('j M Y') }}')">
                         @csrf
                         @method('DELETE')
@@ -369,12 +384,10 @@
 function confirmDeleteWorkout(e, split, date) {
     e.preventDefault();
     var form = e.target;
+    var formId = 'del-form-' + Math.random().toString(36).slice(2);
+    form.id = formId;
     var msg = 'Hapus workout ' + split + ' ' + date + '? Data tidak bisa dikembalikan.';
-    if (typeof window.showConfirm === 'function') {
-        window.showConfirm(msg, function() { form.submit(); });
-    } else {
-        if (confirm(msg)) form.submit();
-    }
+    confirmAction(msg, formId, { danger: true, okLabel: 'Ya, Hapus' });
     return false;
 }
 </script>
