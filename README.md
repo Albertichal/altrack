@@ -40,9 +40,9 @@ ALtrack lets users log their workouts with minimal input by remembering what the
 ---
 
 ## Screenshots
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/5bfb74a8-b77f-4bf2-805a-67c7c7a02310" />
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/9d3364d9-811e-438d-b486-c8cec62f7024" />
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7e016d8a-39c3-4997-8e98-2cd8b1ff7509" />
+<img width="1920" height="1022" alt="Screenshot (3707)" src="https://github.com/user-attachments/assets/f6243b27-471d-4cb6-ad7b-404668448ae9" />
+<img width="1920" height="1031" alt="Screenshot (3708)" src="https://github.com/user-attachments/assets/d81e9150-6fb3-41e0-86ad-d95a92f2fe37" />
+<img width="1920" height="1031" alt="Screenshot (3709)" src="https://github.com/user-attachments/assets/95645ab2-5907-4adf-b234-d5c79c44aeb9" />
 
 
 ---
